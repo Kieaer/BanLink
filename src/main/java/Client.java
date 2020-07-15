@@ -6,8 +6,10 @@ import org.hjson.JsonObject;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import static mindustry.Vars.netServer;
 import static mindustry.Vars.playerGroup;
@@ -21,9 +23,9 @@ public class Client extends Thread {
     public void shutdown() {
         try {
             Thread.currentThread().interrupt();
-            os.close();
-            is.close();
-            socket.close();
+            if(os != null) os.close();
+            if(is != null) is.close();
+            if(socket != null) socket.close();
         } catch (IOException ignored) {
         }
     }
@@ -33,12 +35,14 @@ public class Client extends Thread {
         Config config = new Config();
 
         try {
-            InetAddress address = InetAddress.getByName(config.address + ":" + config.port);
+            InetAddress address = InetAddress.getByName(config.address);
             socket = new Socket(address, config.port);
-            socket.setSoTimeout(2000);
+            is = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            os = new DataOutputStream(socket.getOutputStream());
 
             while ((!Thread.currentThread().isInterrupted())) {
                 String data = is.readLine();
+                Main.active = true;
                 JsonObject obj = readJSON(data).asObject();
 
                 Mode type = Mode.valueOf(obj.get("type").asString());
@@ -61,22 +65,24 @@ public class Client extends Thread {
                         Call.onKick(p.con, Packets.KickReason.banned);
                     }
                 }
+
+                Main.active = false;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            shutdown();
         }
     }
 
     public void share(Mode type, String ip, String uuid) {
         JsonObject obj = new JsonObject();
         obj.add("type", type.toString());
-        obj.add("ip", ip);
-        obj.add("uuid", uuid);
+        obj.add("ip", ip != null ? ip : "<unknown>");
+        obj.add("uuid", uuid != null ? uuid : "<unknown>");
         try {
             os.writeBytes(obj.toString()+"\n");
             os.flush();
         } catch (IOException e){
-            e.printStackTrace();
+            shutdown();
         }
     }
 }

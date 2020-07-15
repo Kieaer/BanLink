@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
 import static mindustry.Vars.netServer;
@@ -32,7 +33,8 @@ public class Server implements Runnable {
                 service.start();
                 list.add(service);
             }
-        }  catch (IOException e) {
+        } catch (SocketException ignored) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -56,6 +58,7 @@ public class Server implements Runnable {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     String data = in.readLine();
+                    Main.active = true;
                     JsonObject obj = readJSON(data).asObject();
 
                     Mode type = Mode.valueOf(obj.get("type").asString());
@@ -64,37 +67,40 @@ public class Server implements Runnable {
 
                     switch (type) {
                         case ban:
-                            if(!uuid.equals("<unknown>")) netServer.admins.banPlayerID(uuid);
-                            if(!ip.equals("<unknown>")) netServer.admins.banPlayerIP(ip);
+                            if (!uuid.equals("<unknown>")) netServer.admins.banPlayerID(uuid);
+                            if (!ip.equals("<unknown>")) netServer.admins.banPlayerIP(ip);
                             break;
                         case unban:
-                            if(!uuid.equals("<unknown>")) netServer.admins.unbanPlayerID(uuid);
-                            if(!ip.equals("<unknown>")) netServer.admins.unbanPlayerIP(ip);
+                            if (!uuid.equals("<unknown>")) netServer.admins.unbanPlayerID(uuid);
+                            if (!ip.equals("<unknown>")) netServer.admins.unbanPlayerIP(ip);
                             break;
                     }
 
-                    for(Player p : playerGroup.all()){
-                        if(netServer.admins.isIDBanned(p.uuid) || netServer.admins.isIPBanned(p.con.address)){
+                    for (Player p : playerGroup.all()) {
+                        if (netServer.admins.isIDBanned(p.uuid) || netServer.admins.isIPBanned(p.con.address)) {
                             Call.onKick(p.con, Packets.KickReason.banned);
                         }
                     }
 
+                    Main.active = false;
+
                     for (Service s : list) {
-                        s.os.writeBytes(data+"\n");
+                        s.os.writeBytes(data + "\n");
                         s.os.flush();
                     }
                 } catch (IOException e){
-                    e.printStackTrace();
+                    shutdown();
                 }
             }
         }
 
         public void shutdown() {
             try {
-                os.close();
-                in.close();
-                socket.close();
+                if(os != null) os.close();
+                if(in != null) in.close();
+                if(socket != null) socket.close();
                 list.remove(this);
+                Thread.currentThread().interrupt();
             } catch (Exception ignored) {
             }
         }
@@ -102,6 +108,8 @@ public class Server implements Runnable {
 
     public void shutdown(){
         try {
+            Thread.currentThread().interrupt();
+
             for(Service s : list) {
                 s.shutdown();
             }
@@ -110,6 +118,7 @@ public class Server implements Runnable {
                 Thread.currentThread().interrupt();
                 serverSocket.close();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,8 +127,8 @@ public class Server implements Runnable {
     public void share(Mode type, String ip, String uuid) {
         JsonObject obj = new JsonObject();
         obj.add("type", type.toString());
-        obj.add("ip", ip);
-        obj.add("uuid", uuid);
+        obj.add("ip", ip != null ? ip : "<unknown>");
+        obj.add("uuid", uuid != null ? uuid : "<unknown>");
 
         for(Service s : list){
             try {

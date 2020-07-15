@@ -1,0 +1,7 @@
+{
+  "name": "BanLink",
+  "author": "Kieaer",
+  "main": "Main",
+  "description": "Server to server ban sharing plugin",
+  "version": "1.0"
+}
