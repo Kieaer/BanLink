@@ -2,6 +2,7 @@ import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
+import arc.struct.Array;
 import arc.util.CommandHandler;
 import arc.util.Log;
 import mindustry.game.EventType.*;
@@ -10,10 +11,8 @@ import mindustry.plugin.Plugin;
 import org.hjson.JsonObject;
 import org.hjson.Stringify;
 
-import java.io.IOException;
 import java.util.concurrent.*;
 
-import static mindustry.Vars.mods;
 import static mindustry.Vars.netServer;
 
 public class Main extends Plugin {
@@ -34,59 +33,31 @@ public class Main extends Plugin {
             pluginRoot.child("config.hjson").writeString(obj.toString(Stringify.HJSON_COMMENTS));
         }
 
-        Events.on(ServerLoadEvent.class, () -> {
-            /*for (int a = 0; a < mods.list().size; a++) {
-                if (mods.list().get(a).meta.name.equals("Essentials")) {
-                    Log.err("Essentials plugin detected! This can cause conflicts due to the same function. Use one of the two.");
-                    Core.app.dispose();
-                    Core.app.exit();
-                }
-            }*/
-        });
-
         config = new Config();
         mainThread.submit(config.mode ? client : server);
         Log.info("[BanLink] "+(config.mode ? "client" : "server")+" mode activated. "+(config.mode ? "Address: " + config.address+":"+config.port : "Port: "+config.port));
 
         Events.on(PlayerBanEvent.class, e -> {
-            if(!active && e.player != null) {
-                if (config.mode) {
-                    client.share(Mode.ban, e.player.con.address, e.player.uuid);
-                } else {
-                    server.share(Mode.ban, e.player.con.address, e.player.uuid);
-                }
-            }
+            if(!active && e.player != null) share(Mode.ban, e.player.con.address, e.player.uuid);
         });
 
         Events.on(PlayerIpBanEvent.class, e -> {
             if(!active) {
                 Administration.PlayerInfo data = netServer.admins.findByIP(e.ip);
-                if (config.mode) {
-                    client.share(Mode.ban, e.ip, data != null ? data.id : "<unknown>");
-                } else {
-                    server.share(Mode.ban, e.ip, data != null ? data.id : "<unknown>");
-                }
+                share(Mode.ban, e.ip, data != null ? data.id : "<unknown>");
             }
         });
 
         Events.on(PlayerUnbanEvent.class, e -> {
             if(!active && e.player != null) {
-                if (config.mode) {
-                    client.share(Mode.unban, e.player.con.address, e.player.uuid);
-                } else {
-                    server.share(Mode.unban, e.player.con.address, e.player.uuid);
-                }
+                share(Mode.unban, e.player.con.address, e.player.uuid);
             }
         });
 
         Events.on(PlayerIpUnbanEvent.class, e -> {
             if(!active) {
                 Administration.PlayerInfo data = netServer.admins.findByIP(e.ip);
-                if (config.mode) {
-                    client.share(Mode.unban, e.ip, data != null ? data.id : "<unknown>");
-                } else {
-                    server.share(Mode.unban, e.ip, data != null ? data.id : "<unknown>");
-                }
+                share(Mode.unban, e.ip, data != null ? data.id : "<unknown>");
             }
         });
 
@@ -98,5 +69,23 @@ public class Main extends Plugin {
                 mainThread.shutdownNow();
             }
         });
+    }
+
+    @Override
+    public void registerServerCommands(CommandHandler handler) {
+        handler.register("syncall", "Sync all ban lists from server. (Ban only)", (arg) -> {
+            Array<Administration.PlayerInfo> data = netServer.admins.getBanned();
+            for(Administration.PlayerInfo e : data){
+                share(Mode.unban, e.lastIP, e.id != null ? e.id : "<unknown>");
+            }
+        });
+    }
+
+    void share(Mode mode, String ip, String uuid){
+        if (config.mode) {
+            client.share(mode, ip, uuid);
+        } else {
+            server.share(mode, ip, uuid);
+        }
     }
 }
