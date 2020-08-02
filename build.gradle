@@ -25,19 +25,3 @@ shadowJar {
     archiveFileName = "${project.archivesBaseName}.jar"
     minimize()
 }
-
-sourceSets{
-    test{
-        resources{
-            srcDir "src/main/resources"
-        }
-    }
-}
-
-compileJava {
-    options.encoding = "UTF-8"
-}
-
-test {
-    testLogging.showStandardStreams = true
-}
