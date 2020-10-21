@@ -1,9 +1,9 @@
-import arc.struct.Array;
-import mindustry.entities.type.Player;
+import arc.struct.Seq;
 import mindustry.gen.Call;
+import mindustry.gen.Groups;
+import mindustry.gen.Playerc;
 import mindustry.net.Packets;
 import org.hjson.JsonObject;
-import org.hjson.JsonValue;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -15,11 +15,10 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
 import static mindustry.Vars.netServer;
-import static mindustry.Vars.playerGroup;
 import static org.hjson.JsonValue.readJSON;
 
 public class Server implements Runnable {
-    public Array<Service> list = new Array<>();
+    public Seq<Service> list = new Seq<>();
     public ServerSocket serverSocket;
 
     @Override
@@ -66,19 +65,19 @@ public class Server implements Runnable {
                     String uuid = obj.get("uuid").asString();
 
                     switch (type) {
-                        case ban:
+                        case ban -> {
                             if (!uuid.equals("<unknown>")) netServer.admins.banPlayerID(uuid);
                             if (!ip.equals("<unknown>")) netServer.admins.banPlayerIP(ip);
-                            break;
-                        case unban:
+                        }
+                        case unban -> {
                             if (!uuid.equals("<unknown>")) netServer.admins.unbanPlayerID(uuid);
                             if (!ip.equals("<unknown>")) netServer.admins.unbanPlayerIP(ip);
-                            break;
+                        }
                     }
 
-                    for (Player p : playerGroup.all()) {
-                        if (netServer.admins.isIDBanned(p.uuid) || netServer.admins.isIPBanned(p.con.address)) {
-                            Call.onKick(p.con, Packets.KickReason.banned);
+                    for (Playerc p : Groups.player) {
+                        if (netServer.admins.isIDBanned(p.uuid()) || netServer.admins.isIPBanned(p.con().address)) {
+                            Call.kick(p.con(), Packets.KickReason.banned);
                         }
                     }
 

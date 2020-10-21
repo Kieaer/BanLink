@@ -2,12 +2,13 @@ import arc.ApplicationListener;
 import arc.Core;
 import arc.Events;
 import arc.files.Fi;
-import arc.struct.Array;
+import arc.struct.Seq;
 import arc.util.CommandHandler;
 import arc.util.Log;
+import mindustry.Vars;
 import mindustry.game.EventType.*;
+import mindustry.mod.Plugin;
 import mindustry.net.Administration;
-import mindustry.plugin.Plugin;
 import org.hjson.JsonObject;
 import org.hjson.Stringify;
 
@@ -38,7 +39,7 @@ public class Main extends Plugin {
         Log.info("[BanLink] "+(config.mode ? "client" : "server")+" mode activated. "+(config.mode ? "Address: " + config.address+":"+config.port : "Port: "+config.port));
 
         Events.on(PlayerBanEvent.class, e -> {
-            if(!active && e.player != null) share(Mode.ban, e.player.con.address, e.player.uuid);
+            if(!active && e.player != null) share(Mode.ban, e.player.con.address, e.player.uuid());
         });
 
         Events.on(PlayerIpBanEvent.class, e -> {
@@ -50,7 +51,7 @@ public class Main extends Plugin {
 
         Events.on(PlayerUnbanEvent.class, e -> {
             if(!active && e.player != null) {
-                share(Mode.unban, e.player.con.address, e.player.uuid);
+                share(Mode.unban, e.player.con.address, e.player.uuid());
             }
         });
 
@@ -74,7 +75,7 @@ public class Main extends Plugin {
     @Override
     public void registerServerCommands(CommandHandler handler) {
         handler.register("syncall", "Sync all ban lists from server. (Ban only)", (arg) -> {
-            Array<Administration.PlayerInfo> data = netServer.admins.getBanned();
+            Seq<Administration.PlayerInfo> data = netServer.admins.getBanned();
             for(Administration.PlayerInfo e : data){
                 share(Mode.unban, e.lastIP, e.id != null ? e.id : "<unknown>");
             }

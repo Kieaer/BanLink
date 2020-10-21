@@ -1,5 +1,6 @@
-import mindustry.entities.type.Player;
 import mindustry.gen.Call;
+import mindustry.gen.Groups;
+import mindustry.gen.Playerc;
 import mindustry.net.Packets;
 import org.hjson.JsonObject;
 
@@ -12,7 +13,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import static mindustry.Vars.netServer;
-import static mindustry.Vars.playerGroup;
 import static org.hjson.JsonValue.readJSON;
 
 public class Client extends Thread {
@@ -50,19 +50,19 @@ public class Client extends Thread {
                 String uuid = obj.get("uuid").asString();
 
                 switch (type) {
-                    case ban:
-                        if(!uuid.equals("<unknown>")) netServer.admins.banPlayerID(uuid);
-                        if(!ip.equals("<unknown>")) netServer.admins.banPlayerIP(ip);
-                        break;
-                    case unban:
-                        if(!uuid.equals("<unknown>")) netServer.admins.unbanPlayerID(uuid);
-                        if(!ip.equals("<unknown>")) netServer.admins.unbanPlayerIP(ip);
-                        break;
+                    case ban -> {
+                        if (!uuid.equals("<unknown>")) netServer.admins.banPlayerID(uuid);
+                        if (!ip.equals("<unknown>")) netServer.admins.banPlayerIP(ip);
+                    }
+                    case unban -> {
+                        if (!uuid.equals("<unknown>")) netServer.admins.unbanPlayerID(uuid);
+                        if (!ip.equals("<unknown>")) netServer.admins.unbanPlayerIP(ip);
+                    }
                 }
 
-                for(Player p : playerGroup.all()){
-                    if(netServer.admins.isIDBanned(p.uuid) || netServer.admins.isIPBanned(p.con.address)){
-                        Call.onKick(p.con, Packets.KickReason.banned);
+                for(Playerc p : Groups.player){
+                    if(netServer.admins.isIDBanned(p.uuid()) || netServer.admins.isIPBanned(p.con().address)){
+                        Call.kick(p.con(), Packets.KickReason.banned);
                     }
                 }
 
