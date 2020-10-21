@@ -1,6 +1,5 @@
 plugins {
     id 'java-library'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 
 repositories {
@@ -17,11 +16,8 @@ dependencies {
 }
 
 jar {
-    enabled = false
-    dependsOn(shadowJar)
-}
-
-shadowJar {
     archiveFileName = "${project.archivesBaseName}.jar"
-    minimize()
+    from{
+        configurations.runtimeClasspath.collect{it.isDirectory() ? it : zipTree(it)}
+    }
 }
