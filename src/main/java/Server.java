@@ -105,11 +105,15 @@ public class Server implements Runnable {
         }
     }
 
-    public void shutdown(){
-        try {
-            Thread.currentThread().interrupt();
+    public void shutdown(Exception e) {
+        if(e != null){
+            e.printStackTrace();
+        }
 
-            for(Service s : list) {
+        Thread.currentThread().interrupt();
+
+        try {
+            for (Service s : list) {
                 s.shutdown();
             }
 
@@ -117,9 +121,8 @@ public class Server implements Runnable {
                 Thread.currentThread().interrupt();
                 serverSocket.close();
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ex){
+            ex.printStackTrace();
         }
     }
 

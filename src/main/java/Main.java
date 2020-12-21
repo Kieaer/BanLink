@@ -65,8 +65,8 @@ public class Main extends Plugin {
         Core.app.addListener(new ApplicationListener() {
             @Override
             public void dispose() {
-                server.shutdown();
-                client.shutdown();
+                server.shutdown(null);
+                client.shutdown(null);
                 mainThread.shutdownNow();
             }
         });

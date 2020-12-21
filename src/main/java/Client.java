@@ -20,7 +20,7 @@ public class Client extends Thread {
     public BufferedReader is;
     public DataOutputStream os;
 
-    public void shutdown() {
+    public void shutdown(Exception e) {
         try {
             Thread.currentThread().interrupt();
             if(os != null) os.close();
@@ -69,7 +69,7 @@ public class Client extends Thread {
                 Main.active = false;
             }
         } catch (IOException e) {
-            shutdown();
+            shutdown(e);
         }
     }
 
@@ -82,7 +82,7 @@ public class Client extends Thread {
             os.writeBytes(obj.toString()+"\n");
             os.flush();
         } catch (IOException e){
-            shutdown();
+            shutdown(e);
         }
     }
 }
