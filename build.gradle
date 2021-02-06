@@ -9,7 +9,6 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
     compileOnly 'com.github.Anuken.Arc:arc-core:+'
     compileOnly 'com.github.Anuken.Mindustry:core:+'
     implementation 'com.github.PersonTheCat:hjson-java:master'

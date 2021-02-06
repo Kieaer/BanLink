@@ -77,8 +77,9 @@ public class Main extends Plugin {
         handler.register("syncall", "Sync all ban lists from server. (Ban only)", (arg) -> {
             Seq<Administration.PlayerInfo> data = netServer.admins.getBanned();
             for(Administration.PlayerInfo e : data){
-                share(Mode.unban, e.lastIP, e.id != null ? e.id : "<unknown>");
+                share(Mode.ban, e.lastIP, e.id != null ? e.id : "<unknown>");
             }
+            Log.info(data.size+" banned players data was sented.");
         });
     }
 

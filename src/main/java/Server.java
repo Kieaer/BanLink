@@ -121,8 +121,7 @@ public class Server implements Runnable {
                 Thread.currentThread().interrupt();
                 serverSocket.close();
             }
-        } catch (IOException ex){
-            ex.printStackTrace();
+        } catch (IOException ignored){
         }
     }
 
